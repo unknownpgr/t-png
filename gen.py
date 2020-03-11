@@ -7,7 +7,7 @@ def ps1(x, y):
     Get optimal solution of |ax+y|=0 for a
     (x,y = array-like objeect)
     """
-    return -np.dot(x, y)/np.dot(x, x)
+    return -1*np.dot(x, y)/np.dot(x, x)
 
 
 def _func1_get_alpha(x, y, b1, b2):
