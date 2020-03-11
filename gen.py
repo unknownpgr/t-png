@@ -4,26 +4,35 @@ import cv2
 
 def ps1(x, y):
     """
-    Get nearest solution of |ax+y|=0 for a
-    x,y = array-like objeect
+    Get optimal solution of |ax+y|=0 for a
+    (x,y = array-like objeect)
     """
     return -np.dot(x, y)/np.dot(x, x)
 
 
-def getAlpha(x, y, b1, b2):
+def _func1_get_alpha(x, y, b1, b2):
     """
+    Get alpha value for algorithm 1
     x,y,b1,b2 = numpy vector
     """
     return ps1(b1-b2, x-y-b1+b2)
 
 
 def func1(x, y, b1, b2):
-    alpha = getAlpha(x, y, b1, b2)
-    value = (x+y-b1-b2)/(2*alpha)+(b1+b2)/2
-    return np.concatenate((value, [alpha*255]))
+    """
+    Make a pixel to be x on background b1 and y on background b2.
+    Optimize alpha first and then calculate rgb from a.
+    """
+    alpha = _func1_get_alpha(x, y, b1, b2)
+    rgb = (x+y-b1-b2)/(2*alpha)+(b1+b2)/2
+    return np.concatenate((rgb, [alpha*255]))
 
 
 def func2(x, y, bx, by):
+    """
+    Make a pixel to be x on background bx and y on background by.
+    Optimize alpha and rgb at once.
+    """
     x1 = x[0]
     x2 = x[1]
     x3 = x[2]
@@ -40,6 +49,7 @@ def func2(x, y, bx, by):
     by2 = by[1]
     by3 = by[2]
 
+    # I used matlab to calculate this formula.
     r = (bx2**2*x1 + bx3**2*x1 + 2*by1**2*x1 + by2**2*x1 + by3**2*x1 + 2*bx1**2*y1 + bx2**2*y1 + bx3**2*y1 + by2**2*y1 + by3**2*y1 - bx1*bx2*x2 - bx1*bx3*x3 - 2*bx1*by1*x1 + bx1*by2*x2 - bx2*by1*x2 - 2*bx2*by2*x1 + bx1*by3*x3 - bx3*by1*x3 - 2*bx3*by3*x1 + by1*by2*x2 + by1*by3*x3 + bx1*bx2*y2 + bx1*bx3*y3 - 2*bx1*by1 *
          y1 - bx1*by2*y2 + bx2*by1*y2 - 2*bx2*by2*y1 - bx1*by3*y3 + bx3*by1*y3 - 2*bx3*by3*y1 - by1*by2*y2 - by1*by3*y3)/(2*(by1*x1 - 2*bx2*by2 - 2*bx3*by3 - bx1*x1 - bx2*x2 - bx3*x3 - 2*bx1*by1 + by2*x2 + by3*x3 + bx1*y1 + bx2*y2 + bx3*y3 - by1*y1 - by2*y2 - by3*y3 + bx1**2 + bx2**2 + bx3**2 + by1**2 + by2**2 + by3**2))
     g = (bx1**2*x2 + bx3**2*x2 + by1**2*x2 + 2*by2**2*x2 + by3**2*x2 + bx1**2*y2 + 2*bx2**2*y2 + bx3**2*y2 + by1**2*y2 + by3**2*y2 - bx1*bx2*x1 - bx2*bx3*x3 - 2*bx1*by1*x2 - bx1*by2*x1 + bx2*by1*x1 - 2*bx2*by2*x2 + bx2*by3*x3 - bx3*by2*x3 - 2*bx3*by3*x2 + by1*by2*x1 + by2*by3*x3 + bx1*bx2*y1 + bx2*bx3*y3 - 2*bx1*by1 *
@@ -52,6 +62,12 @@ def func2(x, y, bx, by):
 
 
 def func3(x, y, _, __):
+    """
+    Make a pixel to be x on background white and y on background black.
+    3rd and 4th parameter is nothing.
+    func3 is equal to func2(x,y,[255,255,255],[0,0,0]).
+    """
+
     x1 = x[0]
     x2 = x[1]
     x3 = x[2]
@@ -69,13 +85,18 @@ def func3(x, y, _, __):
     return np.array(rgba)
 
 
+# Path of input image
 pathX = 'a.jpg'
-pathB = 'b.jpg'
+pathY = 'b.jpg'
+
+# Color shift
 D = 0.2
+
+# Size scale factor
 scale = 0.5
 
 orgX = cv2.imread(pathX)
-orgY = cv2.imread(pathB)
+orgY = cv2.imread(pathY)
 
 H = max(orgX.shape[0], orgY.shape[0])
 W = max(orgX.shape[1], orgY.shape[1])
@@ -93,6 +114,7 @@ imgY = cv2.resize(imgY, (int(W*scale), int(H*scale)))
 W = int(W*scale)
 H = int(H*scale)
 
+# Background image
 bgrX = np.ones([H, W, 3])*255
 bgrY = np.zeros([H, W, 3])
 
