@@ -128,7 +128,13 @@ def solve(x, y, b1, b2, func):
             result[i, j] = func(x[i, j], y[i, j], b1[i, j], b2[i, j])
     result[result > 255] = 255
     result[result < 0] = 0
-    return result.astype(np.uint8)
+    result = result.astype(np.uint8)
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(result, 'unknownpgr@gmail.com', (10, 20),
+                font, 0.5, (128, 128, 128), 1, cv2.LINE_AA)
+
+    return result
 
 
 r = solve(imgX, imgY, bgrX, bgrY, func1)
