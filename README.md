@@ -1,4 +1,6 @@
 # Implementing an image that changes when clicked
+## Webbrowser version
+See [Here](https://unknownpgr.github.io/t-png/web/index.html)
 ## Concept
 Some websites have a different background color when viewed on the main screen and when the image is clicked on a large screen. In this case, the png image can set the transparency of pixels so that the image can look different according to the background color.
 I developed an algorithm that automatically generates these images.
