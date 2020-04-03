@@ -1,0 +1,274 @@
+<html>
+
+<head>
+    <title>다운하면 변하는 png 생성기</title>
+    <style>
+        @font-face {
+            font-family: 'mydefault';
+            src: url('font2.ttf') format('truetype');
+        }
+
+        * {
+            font-family: 'mydefault';
+        }
+
+        body {
+            background-color: #fffbfb;
+            margin: 0;
+            height: 120%;
+        }
+
+        #header {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            font-size: 2em;
+        }
+
+        #headerInner {
+            text-align: center;
+            margin: 32px;
+        }
+
+        .mainFrame {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .subFrame {
+            text-align: center;
+            width: 50%;
+        }
+
+        .img {
+            width: 240px;
+        }
+
+        input[type=file] {
+            display: none;
+        }
+
+        .custom-file-upload,
+        button {
+            display: block;
+            width: 300px;
+            border-radius: 4px;
+            background-color: #202040;
+            color: #eef;
+            padding: 8px;
+            margin: auto;
+            margin-top: 16px;
+            margin-bottom: 16px;
+            border: none;
+            font-size: 16px;
+            /* solid 1px #ccc; */
+        }
+
+        button {
+            margin: 0;
+        }
+
+        #result {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 128px;
+        }
+
+        .hsplit {
+            height: 2px;
+            width: 100%;
+            margin-top: 32px;
+            margin-bottom: 32px;
+            background-color: #eee;
+        }
+
+        #textbox {
+            padding-left: 64px;
+            padding-right: 64px;
+            line-height: 32px;
+        }
+
+        #footer {
+            background-color: #eee;
+            height: 64px;
+            width: 100%;
+            bottom: 0;
+            position: fixed;
+            text-align: center;
+            vertical-align: bottom;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header">
+        <div id="headerInner"> 다운로드하면 변하는 이미지 생성기</div>
+    </div>
+    <div class="mainFrame">
+        <div class="subFrame">
+            <div>밝은 이미지</div>
+            <label for="f1" class="custom-file-upload">
+                클릭해서 파일을 업로드해주세요.
+            </label>
+            <input id="f1" type="file" value="" onchange="openFile(this,true);">
+            <img id="imgB" class="img" src="./photo.png" alt="">
+        </div>
+        <div class="subFrame">
+            <div>어두운 이미지</div>
+            <label for="f2" class="custom-file-upload">
+                클릭해서 파일을 업로드해주세요.
+            </label>
+            <input id="f2" type="file" onchange="openFile(this,false);">
+            <img id="imgD" class="img" src="./photo.png" alt="">
+        </div>
+    </div>
+    <canvas id="cnv" width="1000" height="1000" hidden></canvas>
+    <div class="hsplit"></div>
+    <div class="mainFrame">
+        <div id="textbox">
+            <strong> 사용법</strong>
+            <br>
+            1. 밝은 이미지와 어두운 이미지를 업로드한다. (jpg, png만 테스트해봄)
+            <br>
+            2. 'bias' 수치를 조절한다. bias가 작으면 채도가 높지만 두 이미지가 더 섞여보이고, 크면 채도가 낮지만 두 이미지가 분리가 잘 된다.
+            <br>
+            3. 아래의 '생성' 버튼을 누른다.
+            <br>
+            4. 흰색 배경에서는 밝은 이미지로, 검은색 배경에서는 어두운 이미지로 보이는 그림이 생성된다.
+            <br>
+            5. 데스크톱이라면 우클릭, 모바일이라면 길게 클릭하여 다운로드한다.
+            <br>
+            >> 아래 'Size'는 결과 이미지의 가로 길이이다. 바꾸고 싶다면 이미지를 업로드하기 전에 설정해야 한다. 640이면 적당하다.
+            <br>
+            <br>
+            Email : unknownpgr@gmail.com
+            <br>
+            <a href="https://github.com/unknownpgr/t-png">깃허브 리포지토리 링크</a>
+        </div>
+    </div>
+    <div class="hsplit"></div>
+    <div class="mainFrame">
+        <label for="shift">Bias : <span id="shiftValue">25</span>
+            <input id="shift" type="range" max="255" value="152" onchange="shiftChange(this)">
+        </label>
+        <label for="size">Size :
+            <input id="size" type="number" value="640" onchange="sizeChange(this)">
+        </label>
+        <button onclick="generate()">
+            생성!
+        </button>
+    </div>
+    <div id="result">
+        <img id="imgNew" src="" alt="">
+    </div>
+    <div id="footer"><br> I am just a footer. don't care.</div>
+    <script>
+        var WIDTH = 640
+
+        var ctx = cnv.getContext('2d');
+
+        function openFile(input, bright) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                imgB.onload = () => getImageData(imgB, true);
+                imgD.onload = () => getImageData(imgD, false);
+
+                if (bright) imgB.src = e.target.result
+                else imgD.src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        var imgDataB, imgDataD;
+
+        function getImageData(img, bright) {
+            ctx.clearRect(1000, 1000, 1000, 1000);
+            var height = img.height * WIDTH / img.width
+            ctx.drawImage(img, 0, 0, WIDTH, height);
+            imageData = ctx.getImageData(0, 0, WIDTH, height);
+            if (bright) imgDataB = imageData;
+            else imgDataD = imageData;
+        }
+
+        var sft = 25
+        var rng = 0
+        function shiftChange(shiftTag) {
+            var value = shiftTag.value * 1
+            sft = value - 128
+            shiftValue.innerText = sft
+            rng = (255 - sft) / 255
+        }
+        shiftChange(shift)
+
+        function magic(x1, x2, x3, y1, y2, y3) {
+            x1 *= rng
+            x2 *= rng
+            x3 *= rng
+            y1 *= rng
+            y2 *= rng
+            y3 *= rng
+            x1 += sft
+            x2 += sft
+            x3 += sft
+
+            return [
+                // R
+                (130050 * x1 - 65025 * x2 - 65025 * x3 + 260100 * y1 + 65025 * y2 + 65025 * y3) /
+                (2 * (255 * y1 - 255 * x2 - 255 * x3 - 255 * x1 + 255 * y2 + 255 * y3 + 195075)),
+                // G
+                (130050 * x2 - 65025 * x1 - 65025 * x3 + 65025 * y1 + 260100 * y2 + 65025 * y3) /
+                (2 * (255 * y1 - 255 * x2 - 255 * x3 - 255 * x1 + 255 * y2 + 255 * y3 + 195075)),
+                // B
+                (130050 * x3 - 65025 * x2 - 65025 * x1 + 65025 * y1 + 65025 * y2 + 260100 * y3) /
+                (2 * (255 * y1 - 255 * x2 - 255 * x3 - 255 * x1 + 255 * y2 + 255 * y3 + 195075)),
+                // A
+                y1 / 3 - x2 / 3 - x3 / 3 - x1 / 3 + y2 / 3 + y3 / 3 + 255]
+        }
+
+        function g(data, i) {
+            if (i < data.data.length) return data.data[i]
+            return 0;
+        }
+
+        function r(i) {
+            if (i < 0) return 0
+            if (i > 255) return 255
+            return i
+        }
+
+        function sizeChange(tag) {
+            WIDTH = tag.value * 1
+        }
+
+        function generate() {
+            ctx.clearRect(1000, 1000, 1000, 1000);
+
+            var height = Math.max(imgDataB.height, imgDataD.height)
+            var newImgData = ctx.createImageData(WIDTH, height)
+            console.log(newImgData)
+            console.log(imgDataB)
+            console.log(imgDataD)
+
+            for (var i = 0; i < newImgData.data.length; i += 4) {
+                var b = imgDataB
+                var d = imgDataD
+                rgba = magic(
+                    g(b, i + 0), g(b, i + 1), g(b, i + 2),
+                    g(d, i + 0), g(d, i + 1), g(d, i + 2))
+                newImgData.data[i + 0] = r(rgba[0])
+                newImgData.data[i + 1] = r(rgba[1])
+                newImgData.data[i + 2] = r(rgba[2])
+                newImgData.data[i + 3] = r(rgba[3])
+            }
+
+            cnv.width = WIDTH;
+            cnv.height = height;
+            ctx.putImageData(newImgData, 0, 0)
+            ctx.fillText("unknownpgr", 10, 10);
+            var dataURL = cnv.toDataURL();
+            imgNew.src = dataURL;
+        }
+    </script>
+</body>
+
+</html>
